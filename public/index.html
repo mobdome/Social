@@ -46,8 +46,16 @@
             <p class="lead">Twitter/X and Instagram lock your data. Download your follower lists, connections, and posts into clean CSV files.</p>
             
             <div class="input-box">
-                <input type="text" placeholder="Enter Twitter/IG Username...">
-                <button onclick="alert('Feature coming in v1.0')">Scan Profile</button>
+                <input type="text" id="usernameInput" placeholder="Enter Twitter/IG Username..." required>
+                <button id="scanBtn" onclick="scanProfile()">Scan Profile</button>
+            </div>
+            
+            <div id="resultArea" style="display: none; margin-top: 30px; background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--accent); max-width: 500px; margin-left: auto; margin-right: auto;">
+                <h3 style="margin: 0 0 10px 0; color: #fff;">Scan Complete!</h3>
+                <p id="resultText" style="color: var(--text-muted); margin-bottom: 20px;"></p>
+                <button id="exportBtn" style="background: var(--accent); color: white; border: none; padding: 12px 30px; border-radius: 8px; font-weight: 700; cursor: pointer; width: 100%;">
+                    Export Data ($19)
+                </button>
             </div>
             
             <div class="trust-badge">
@@ -72,5 +80,48 @@
 
         <footer>&copy; 2026 Mobdome Labs.</footer>
     </div>
+    <script>
+        async function scanProfile() {
+            const username = document.getElementById('usernameInput').value;
+            const btn = document.getElementById('scanBtn');
+            const resultArea = document.getElementById('resultArea');
+            const resultText = document.getElementById('resultText');
+            const exportBtn = document.getElementById('exportBtn');
+
+            if (!username) {
+                alert('Please enter a username');
+                return;
+            }
+
+            btn.innerText = 'Scanning...';
+            btn.disabled = true;
+            resultArea.style.display = 'none';
+
+            try {
+                const response = await fetch('/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultText.innerText = data.message;
+                    resultArea.style.display = 'block';
+                    // Link the dynamic export button to Stripe
+                    exportBtn.onclick = () => window.location.href = 'https://buy.stripe.com/test_7sI01geB89C8aSQ000';
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Failed to connect to scanner.');
+            } finally {
+                btn.innerText = 'Scan Profile';
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 </html>
