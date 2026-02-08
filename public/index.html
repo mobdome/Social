@@ -81,42 +81,59 @@
         <footer>&copy; 2026 Mobdome Labs.</footer>
     </div>
     <script>
+        document.getElementById('scanBtn').addEventListener('click', scanProfile);
+
         async function scanProfile() {
             const username = document.getElementById('usernameInput').value;
             const btn = document.getElementById('scanBtn');
             const resultArea = document.getElementById('resultArea');
             const resultText = document.getElementById('resultText');
             const exportBtn = document.getElementById('exportBtn');
+            const resultTitle = resultArea.querySelector('h3');
 
             if (!username) {
                 alert('Please enter a username');
                 return;
             }
 
+            // Reset UI state
             btn.innerText = 'Scanning...';
             btn.disabled = true;
             resultArea.style.display = 'none';
+            exportBtn.style.display = 'none'; // Hide by default until success
 
             try {
+                // Mocking the backend for now if it doesn't exist, but the instruction said "Bind ... to the backend /scan endpoint"
                 const response = await fetch('/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ username })
                 });
 
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
                 const data = await response.json();
 
                 if (data.success) {
-                    resultText.innerText = data.message;
+                    resultTitle.innerText = 'Scan Complete!';
+                    resultText.innerText = data.message || `Found ${data.count ? data.count.toLocaleString() : 'unknown'} followers.`;
                     resultArea.style.display = 'block';
-                    // Link the dynamic export button to Stripe
-                    exportBtn.onclick = () => window.location.href = 'https://buy.stripe.com/test_7sI01geB89C8aSQ000';
+                    exportBtn.style.display = 'block'; // Show Pay button ONLY on success
+                    exportBtn.onclick = () => window.location.assign('https://buy.stripe.com/test_7sI01geB89C8aSQ000');
                 } else {
-                    alert('Error: ' + data.error);
+                    resultTitle.innerText = 'Scan Failed';
+                    resultText.innerText = data.error || 'User not found or private.';
+                    resultArea.style.display = 'block';
+                    exportBtn.style.display = 'none';
                 }
             } catch (err) {
                 console.error(err);
-                alert('Failed to connect to scanner.');
+                resultTitle.innerText = 'Error';
+                resultText.innerText = 'Could not connect to scanner. Please try again.';
+                resultArea.style.display = 'block';
+                exportBtn.style.display = 'none';
             } finally {
                 btn.innerText = 'Scan Profile';
                 btn.disabled = false;
